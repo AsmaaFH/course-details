@@ -121,6 +121,6 @@ html {
 
 /* Plyr Video Player Color Customization */
 .plyr {
-  --plyr-color-main: #41b69d;
+  --plyr-color-main: var(--color-primary);
 
 }
