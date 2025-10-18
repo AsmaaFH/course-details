@@ -3,6 +3,22 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Maximize, Volume2, VolumeX } from "lucide-react";
 
+// Extend types for browser-specific fullscreen APIs
+interface DocumentWithFullscreen extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => void;
+  mozCancelFullScreen?: () => void;
+  msExitFullscreen?: () => void;
+}
+
+interface VideoElementWithFullscreen extends HTMLVideoElement {
+  webkitRequestFullscreen?: () => void;
+  mozRequestFullScreen?: () => void;
+  msRequestFullscreen?: () => void;
+}
+
 interface VideoPlayerProps {
   isSticky?: boolean;
 }
@@ -28,12 +44,34 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
     const updateTime = () => setCurrentTime(video.currentTime);
     const updateDuration = () => setDuration(video.duration);
 
+    // Fullscreen change listeners
+    const handleFullscreenChange = () => {
+      const doc = document as DocumentWithFullscreen;
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      );
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
     video.addEventListener("timeupdate", updateTime);
     video.addEventListener("loadedmetadata", updateDuration);
+    
+    // Add fullscreen change listeners
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
     return () => {
       video.removeEventListener("timeupdate", updateTime);
       video.removeEventListener("loadedmetadata", updateDuration);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
     };
   }, []);
 
@@ -61,15 +99,33 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
   };
 
   const toggleFullscreen = () => {
-    if (!playerRef.current) return;
+    const video = videoRef.current as VideoElementWithFullscreen;
+    if (!video) return;
 
     if (!isFullscreen) {
-      if (playerRef.current.requestFullscreen) {
+      // Try different fullscreen methods for better mobile support
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      } else if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+      } else if (video.mozRequestFullScreen) {
+        video.mozRequestFullScreen();
+      } else if (video.msRequestFullscreen) {
+        video.msRequestFullscreen();
+      } else if (playerRef.current?.requestFullscreen) {
         playerRef.current.requestFullscreen();
       }
     } else {
+      // Exit fullscreen
+      const doc = document as DocumentWithFullscreen;
       if (document.exitFullscreen) {
         document.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen();
       }
     }
     setIsFullscreen(!isFullscreen);
