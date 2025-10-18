@@ -1,200 +1,80 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Maximize, Volume2, VolumeX } from "lucide-react";
-
-// Extend types for browser-specific fullscreen APIs
-interface DocumentWithFullscreen extends Document {
-  webkitFullscreenElement?: Element | null;
-  mozFullScreenElement?: Element | null;
-  msFullscreenElement?: Element | null;
-  webkitExitFullscreen?: () => void;
-  mozCancelFullScreen?: () => void;
-  msExitFullscreen?: () => void;
-}
-
-interface VideoElementWithFullscreen extends HTMLVideoElement {
-  webkitRequestFullscreen?: () => void;
-  mozRequestFullScreen?: () => void;
-  msRequestFullscreen?: () => void;
-}
+import { useEffect, useRef } from "react";
+import "plyr/dist/plyr.css";
 
 interface VideoPlayerProps {
   isSticky?: boolean;
 }
 
 export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<unknown>(null);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const initializePlayer = async () => {
+      if (videoRef.current && !playerRef.current) {
+        // Dynamic import to avoid SSR issues
+        const Plyr = (await import("plyr")).default;
 
-    // Ensure mobile inline playback
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('webkit-playsinline', 'true');
-    video.setAttribute('x5-playsinline', 'true'); // For some Android browsers
+        playerRef.current = new Plyr(videoRef.current, {
+          controls: [
+            "play-large",
+            "play",
+            "progress",
+            "current-time",
+            "duration",
+            "mute",
+            "volume",
+            "settings",
+            "fullscreen",
+          ],
+          fullscreen: {
+            enabled: true,
+            fallback: true,
+            iosNative: true,
+          },
+          ratio: "16:9",
+          clickToPlay: true,
+          hideControls: true,
+          keyboard: { focused: true, global: false },
+          tooltips: { controls: true, seek: true },
+          captions: { active: false, language: "auto", update: false },
+          settings: ["quality", "speed"],
+          speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
+          quality: {
+            default: 720,
+            options: [1080, 720, 480, 360],
+          },
+        });
 
-    const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => setDuration(video.duration);
+        if (playerRef.current) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (playerRef.current as any).on("enterfullscreen", () => {
+            console.log("Entered fullscreen");
+          });
 
-    // Fullscreen change listeners
-    const handleFullscreenChange = () => {
-      const doc = document as DocumentWithFullscreen;
-      const isCurrentlyFullscreen = !!(
-        document.fullscreenElement ||
-        doc.webkitFullscreenElement ||
-        doc.mozFullScreenElement ||
-        doc.msFullscreenElement
-      );
-      setIsFullscreen(isCurrentlyFullscreen);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (playerRef.current as any).on("exitfullscreen", () => {
+            console.log("Exited fullscreen");
+          });
+        }
+      }
     };
 
-    video.addEventListener("timeupdate", updateTime);
-    video.addEventListener("loadedmetadata", updateDuration);
-    
-    // Add fullscreen change listeners
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
-    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+    initializePlayer();
 
     return () => {
-      video.removeEventListener("timeupdate", updateTime);
-      video.removeEventListener("loadedmetadata", updateDuration);
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+      if (playerRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (playerRef.current as any).destroy();
+        playerRef.current = null;
+      }
     };
   }, []);
 
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (isPlaying) {
-      video.pause();
-    } else {
-      // Prevent mobile popup by ensuring inline playback
-      video.setAttribute('playsinline', 'true');
-      video.setAttribute('webkit-playsinline', 'true');
-      video.play().catch(console.error);
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const toggleFullscreen = () => {
-    const video = videoRef.current as VideoElementWithFullscreen;
-    if (!video) return;
-
-    // Check if we're on mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-
-    if (!isFullscreen) {
-      if (isMobile) {
-        // For mobile, try to make video fullscreen using different approaches
-        try {
-          // First try the standard method
-          if (video.requestFullscreen) {
-            video.requestFullscreen();
-          } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
-          } else if (video.mozRequestFullScreen) {
-            video.mozRequestFullScreen();
-          } else if (video.msRequestFullscreen) {
-            video.msRequestFullscreen();
-          } else {
-            // Fallback: try to make the container fullscreen
-            if (playerRef.current?.requestFullscreen) {
-              playerRef.current.requestFullscreen();
-            }
-          }
-        } catch (error) {
-          console.log('Fullscreen not supported on this device');
-          // On some mobile browsers, we might need to use a different approach
-          // Try to maximize the video element
-          video.style.position = 'fixed';
-          video.style.top = '0';
-          video.style.left = '0';
-          video.style.width = '100vw';
-          video.style.height = '100vh';
-          video.style.zIndex = '9999';
-          video.style.backgroundColor = 'black';
-          setIsFullscreen(true);
-        }
-      } else {
-        // Desktop behavior
-        if (video.requestFullscreen) {
-          video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-          video.webkitRequestFullscreen();
-        } else if (video.mozRequestFullScreen) {
-          video.mozRequestFullScreen();
-        } else if (video.msRequestFullscreen) {
-          video.msRequestFullscreen();
-        } else if (playerRef.current?.requestFullscreen) {
-          playerRef.current.requestFullscreen();
-        }
-      }
-    } else {
-      // Exit fullscreen
-      const doc = document as DocumentWithFullscreen;
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (doc.webkitExitFullscreen) {
-        doc.webkitExitFullscreen();
-      } else if (doc.mozCancelFullScreen) {
-        doc.mozCancelFullScreen();
-      } else if (doc.msExitFullscreen) {
-        doc.msExitFullscreen();
-      } else {
-        // Fallback: reset video styles
-        video.style.position = '';
-        video.style.top = '';
-        video.style.left = '';
-        video.style.width = '';
-        video.style.height = '';
-        video.style.zIndex = '';
-        video.style.backgroundColor = '';
-        setIsFullscreen(false);
-      }
-    }
-    setIsFullscreen(!isFullscreen);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const newTime = parseFloat(e.target.value);
-    video.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
   return (
     <div
-      ref={playerRef}
       className={`bg-black rounded-lg overflow-hidden shadow-lg w-full ${
         isSticky
           ? "fixed top-0 start-0 end-0 z-50 rounded-none max-w-md mx-auto lg:!relative lg:!top-auto lg:!left-auto lg:!right-auto lg:!max-w-none lg:!z-auto"
@@ -202,77 +82,17 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
       }`}
     >
       <div className="relative aspect-video bg-gray-900">
-        <video 
-          ref={videoRef} 
-          className="w-full h-full object-contain" 
-          poster="/course-poster.jpg" 
-          onClick={togglePlay}
-          onDoubleClick={toggleFullscreen}
+        <video
+          ref={videoRef}
+          className="w-full h-full"
+          poster="/course-poster.jpg"
           playsInline
           webkit-playsinline="true"
-          controls={false}
           preload="metadata"
         >
           <source src="/video.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-
-        {/* Play/Pause Overlay */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              onClick={togglePlay}
-              className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all"
-            >
-              <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
-            </button>
-          </div>
-        )}
-
-        {/* Mobile Fullscreen Hint */}
-        <div className="absolute top-2 right-2 lg:hidden">
-          <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-            Double tap for fullscreen
-          </div>
-        </div>
-
-        {/* Controls Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-          {/* Progress Bar */}
-          <div className="mb-3">
-            <input
-              type="range"
-              min="0"
-              max={duration || 0}
-              value={currentTime}
-              onChange={handleSeek}
-              className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center space-x-4">
-              <button onClick={togglePlay} className="hover:text-gray-300 transition-colors">
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </button>
-
-              <button onClick={toggleMute} className="hover:text-gray-300 transition-colors">
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
-
-              <span className="text-sm">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button onClick={toggleFullscreen} className="hover:text-gray-300 transition-colors">
-                <Maximize className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
