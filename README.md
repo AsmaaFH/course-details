@@ -9,6 +9,7 @@ This project implements a fully-featured course details page with a focus on use
 ## ✨ Key Features
 
 ### 🎥 Video Player
+
 - **Smart Sticky Behavior**: Video becomes sticky on mobile when scrolling (similar to YouTube mobile experience)
 - **Desktop/Mobile Optimization**: Sticky behavior only on mobile screens (< 768px)
 - **Custom Controls**: Play/pause, volume control, seekbar, time display, fullscreen
@@ -16,6 +17,7 @@ This project implements a fully-featured course details page with a focus on use
 - **Multiple Format Support**: MP4 and MOV format compatibility
 
 ### 🧭 Navigation System
+
 - **Four Navigation Actions**:
   - **Topics**: Smooth scroll to course modules section
   - **Comments**: Smooth scroll to comments section
@@ -25,17 +27,20 @@ This project implements a fully-featured course details page with a focus on use
 - **Smooth Scrolling**: Implemented with CSS `scroll-behavior`
 
 ### 📚 Course Materials
+
 - **Two Information Cards**: Duration, Lessons, Enrolled students, Language
 - **DRY Principle Applied**: Reusable component logic
 - **Custom Shadow**: Subtle `0 0 20px #00000010` shadow for depth
 - **Responsive Layout**: Adapts to all screen sizes
 
 ### 📊 Course Progress Bar
+
 - **Animated Progress**: Smooth animation to current progress (63%)
 - **"You" Indicator**: Shows user's current position
 - **Visual Feedback**: Gradient progress bar with clear percentage display
 
 ### 📖 Course Modules
+
 - **Reusable Component**: Accepts props for different week modules
 - **Expandable/Collapsible**: Click to show/hide lesson details
 - **Status Indicators**: Duration badges, question count, lock icons
@@ -46,6 +51,7 @@ This project implements a fully-featured course details page with a focus on use
   - **Locked Lessons**: Visual lock icon with custom SVG
 
 ### 🧪 Quiz System
+
 - **Full-Featured Quiz Interface**:
   - Countdown timer with visual indicator
   - Question navigation (Previous/Next buttons)
@@ -57,6 +63,7 @@ This project implements a fully-featured course details page with a focus on use
 - **Mock Data**: 5 sample questions with correct answers
 
 ### 💬 Comments Section
+
 - **User Comments Display**: Name, avatar, date, content
 - **Avatar Images**: Next.js Image component with fallback
 - **Add Comment Form**: Textarea with submit button
@@ -64,12 +71,14 @@ This project implements a fully-featured course details page with a focus on use
 - **Responsive Layout**: Adapts to mobile and desktop
 
 ### 🌐 Arabic Language Support
+
 - **Cairo Font**: Google Font for Arabic text (GE SS Two alternative)
 - **RTL Direction**: Proper right-to-left text direction
 - **Leaderboard Messages**: Arabic encouragement messages
 - **Custom CSS Variables**: Font family management
 
 ### 📱 Responsive Design
+
 - **Mobile-First Approach**: Optimized for mobile devices
 - **Correct Section Order on Mobile**:
   1. Video
@@ -89,7 +98,7 @@ This project implements a fully-featured course details page with a focus on use
 - **Styling**: Tailwind CSS v4 with Turbopack
 - **Icons**: Lucide React
 - **Modals**: Headless UI v2 (accessible components)
-- **Fonts**: 
+- **Fonts**:
   - League Spartan (primary font)
   - Cairo (Arabic text)
 - **Animations**: Framer Motion
@@ -98,23 +107,26 @@ This project implements a fully-featured course details page with a focus on use
 ## 📦 Installation & Setup
 
 1. **Clone the repository**:
+
 ```bash
 git clone <repository-url>
 cd course-details-page
 ```
 
 2. **Install dependencies**:
+
 ```bash
 npm install
 ```
 
 3. **Run development server**:
+
 ```bash
 npm run dev
 ```
 
 4. **Open in browser**:
-Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 🏗 Project Structure
 
@@ -146,12 +158,14 @@ course-details-page/
 ## 🎨 Design Features
 
 ### Color Scheme
+
 - **Primary Color**: `#41b69d` (Teal green)
 - **Background**: White (`#ffffff`)
 - **Text**: Black (`#000000`)
 - **Accents**: Light gray (`#F5F9FA`) for sections
 
 ### Custom Styling
+
 - **Custom Primary Classes**: `.bg-primary`, `.hover:bg-primary-dark`, `.focus:ring-primary`
 - **Theme Configuration**: Using `@theme inline` in `globals.css` for Tailwind v4
 - **Smooth Scrolling**: Applied globally
@@ -204,6 +218,7 @@ This project is optimized for deployment on Vercel:
 3. Deploy with one click
 
 Alternatively, build and deploy manually:
+
 ```bash
 npm run build
 npm start
