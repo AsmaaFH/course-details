@@ -87,7 +87,7 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
       ref={playerRef}
       className={`bg-black rounded-lg overflow-hidden shadow-lg w-full ${
         isSticky
-          ? "fixed top-0 start-0 end-0 z-50 rounded-none max-w-md mx-auto md:!relative md:!top-auto md:!left-auto md:!right-auto md:!max-w-none"
+          ? "hidden lg:block lg:fixed lg:top-0 lg:start-0 lg:end-0 lg:z-50 lg:rounded-none lg:max-w-md lg:mx-auto"
           : ""
       }`}
     >
