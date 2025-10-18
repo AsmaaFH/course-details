@@ -102,18 +102,54 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
     const video = videoRef.current as VideoElementWithFullscreen;
     if (!video) return;
 
+    // Check if we're on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
     if (!isFullscreen) {
-      // Try different fullscreen methods for better mobile support
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
-      } else if (video.webkitRequestFullscreen) {
-        video.webkitRequestFullscreen();
-      } else if (video.mozRequestFullScreen) {
-        video.mozRequestFullScreen();
-      } else if (video.msRequestFullscreen) {
-        video.msRequestFullscreen();
-      } else if (playerRef.current?.requestFullscreen) {
-        playerRef.current.requestFullscreen();
+      if (isMobile) {
+        // For mobile, try to make video fullscreen using different approaches
+        try {
+          // First try the standard method
+          if (video.requestFullscreen) {
+            video.requestFullscreen();
+          } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+          } else if (video.mozRequestFullScreen) {
+            video.mozRequestFullScreen();
+          } else if (video.msRequestFullscreen) {
+            video.msRequestFullscreen();
+          } else {
+            // Fallback: try to make the container fullscreen
+            if (playerRef.current?.requestFullscreen) {
+              playerRef.current.requestFullscreen();
+            }
+          }
+        } catch (error) {
+          console.log('Fullscreen not supported on this device');
+          // On some mobile browsers, we might need to use a different approach
+          // Try to maximize the video element
+          video.style.position = 'fixed';
+          video.style.top = '0';
+          video.style.left = '0';
+          video.style.width = '100vw';
+          video.style.height = '100vh';
+          video.style.zIndex = '9999';
+          video.style.backgroundColor = 'black';
+          setIsFullscreen(true);
+        }
+      } else {
+        // Desktop behavior
+        if (video.requestFullscreen) {
+          video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+          video.webkitRequestFullscreen();
+        } else if (video.mozRequestFullScreen) {
+          video.mozRequestFullScreen();
+        } else if (video.msRequestFullscreen) {
+          video.msRequestFullscreen();
+        } else if (playerRef.current?.requestFullscreen) {
+          playerRef.current.requestFullscreen();
+        }
       }
     } else {
       // Exit fullscreen
@@ -126,6 +162,16 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
         doc.mozCancelFullScreen();
       } else if (doc.msExitFullscreen) {
         doc.msExitFullscreen();
+      } else {
+        // Fallback: reset video styles
+        video.style.position = '';
+        video.style.top = '';
+        video.style.left = '';
+        video.style.width = '';
+        video.style.height = '';
+        video.style.zIndex = '';
+        video.style.backgroundColor = '';
+        setIsFullscreen(false);
       }
     }
     setIsFullscreen(!isFullscreen);
@@ -161,6 +207,7 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
           className="w-full h-full object-contain" 
           poster="/course-poster.jpg" 
           onClick={togglePlay}
+          onDoubleClick={toggleFullscreen}
           playsInline
           webkit-playsinline="true"
           controls={false}
@@ -181,6 +228,13 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
             </button>
           </div>
         )}
+
+        {/* Mobile Fullscreen Hint */}
+        <div className="absolute top-2 right-2 lg:hidden">
+          <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+            Double tap for fullscreen
+          </div>
+        </div>
 
         {/* Controls Overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
