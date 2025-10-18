@@ -20,6 +20,11 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
     const video = videoRef.current;
     if (!video) return;
 
+    // Ensure mobile inline playback
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('x5-playsinline', 'true'); // For some Android browsers
+
     const updateTime = () => setCurrentTime(video.currentTime);
     const updateDuration = () => setDuration(video.duration);
 
@@ -39,7 +44,10 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
     if (isPlaying) {
       video.pause();
     } else {
-      video.play();
+      // Prevent mobile popup by ensuring inline playback
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.play().catch(console.error);
     }
     setIsPlaying(!isPlaying);
   };
@@ -92,11 +100,15 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
       }`}
     >
       <div className="relative aspect-video bg-gray-900">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-contain"
-          poster="/course-poster.jpg"
+        <video 
+          ref={videoRef} 
+          className="w-full h-full object-contain" 
+          poster="/course-poster.jpg" 
           onClick={togglePlay}
+          playsInline
+          webkit-playsinline="true"
+          controls={false}
+          preload="metadata"
         >
           <source src="/video.mp4" type="video/mp4" />
           Your browser does not support the video tag.
