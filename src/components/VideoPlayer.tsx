@@ -94,7 +94,7 @@ export default function VideoPlayer({ isSticky = false }: VideoPlayerProps) {
       <div className="relative aspect-video bg-gray-900">
         <video
           ref={videoRef}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           poster="/course-poster.jpg"
           onClick={togglePlay}
         >
