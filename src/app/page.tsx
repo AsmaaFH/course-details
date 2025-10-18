@@ -30,17 +30,17 @@ export default function Home() {
 
     const handleResize = () => {
       // Reset sticky state when switching between mobile/desktop
-      const isMobile = window.innerWidth < 768;
-      if (!isMobile) {
-        setIsVideoSticky(false);
-      } else {
+      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      if (isMobile) {
         // Re-evaluate sticky state on mobile after resize
         handleScroll();
+      } else {
+        setIsVideoSticky(false); // Disable sticky on desktop
       }
     };
 
-    // Only add scroll listener if we're on mobile
-    const isMobile = window.innerWidth < 768;
+    // Enable sticky behavior on mobile only - disable on desktop
+    const isMobile = window.innerWidth < 1024; // lg breakpoint
     if (isMobile) {
       window.addEventListener("scroll", handleScroll);
       handleScroll(); // Initial check
